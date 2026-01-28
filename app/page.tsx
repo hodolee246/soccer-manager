@@ -50,47 +50,84 @@ export default function Home() {
   };
 
   const handleVote = async (status: Vote['status']) => {
-    if (!name.trim()) return alert('먼저 이름을 입력해주세요! 👆');
+    // 공백 제거 후 이름 확인
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      alert('이름을 입력해주세요! 👆');
+      return;
+    }
+    
+    // 로컬스토리지에 저장 (혹시 모를 초기화 방지)
+    saveName(trimmedName);
+
     setLoading(true);
     try {
+      console.log('Sending vote request:', { name: trimmedName, status });
+      
       const res = await fetch('/api/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, status }),
+        body: JSON.stringify({ name: trimmedName, status }),
       });
       
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('API Error:', errorText);
+        throw new Error(`Server responded with ${res.status}`);
+      }
       
-      setData(await res.json());
-      alert('투표가 반영되었습니다! 👌');
+      const updatedData = await res.json();
+      console.log('Vote updated:', updatedData);
+      setData(updatedData);
+      
+      // 사용자 피드백 (alert 대신 작은 토스트 메시지나 상태 변경으로 하면 좋겠지만 일단 alert 유지)
+      // alert('투표가 반영되었습니다! 👌'); 
     } catch (err) {
-      console.error(err);
-      alert('투표 저장에 실패했어요. 인터넷 연결을 확인해주세요 ㅠㅠ');
+      console.error('Vote failed:', err);
+      alert('서버와 통신에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeposit = async (status: 'paid' | 'rest') => {
-    if (!name) return alert('먼저 이름을 입력해주세요! 👆');
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      alert('이름을 입력해주세요! 👆');
+      return;
+    }
+    
+    saveName(trimmedName);
     
     const msg = status === 'paid' 
-      ? `${name}님, ${currentMonth}월 회비 입금 확인 요청을 남길까요?`
-      : `${name}님, ${currentMonth}월은 쉬어가시나요? (회비 없음)`;
+      ? `${trimmedName}님, ${currentMonth}월 회비 입금 확인 요청을 남길까요?`
+      : `${trimmedName}님, ${currentMonth}월은 쉬어가시나요? (회비 없음)`;
       
     if (!confirm(msg)) return;
 
     setLoading(true);
     try {
+      console.log('Sending deposit request:', { name: trimmedName, status, month: currentMonth });
+
       const res = await fetch('/api/deposit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, status, month: currentMonth }),
+        body: JSON.stringify({ name: trimmedName, status, month: currentMonth }),
       });
-      setData(await res.json());
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('API Error:', errorText);
+        throw new Error(`Server responded with ${res.status}`);
+      }
+
+      const updatedData = await res.json();
+      console.log('Deposit updated:', updatedData);
+      setData(updatedData);
       alert('반영되었습니다! 🎉');
     } catch (err) {
-      alert('요청 실패 ㅠㅠ');
+      console.error('Deposit failed:', err);
+      alert('요청 처리에 실패했습니다.');
     } finally {
       setLoading(false);
     }

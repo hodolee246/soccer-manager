@@ -80,3 +80,17 @@ export function addDeposit(name: string, status: 'paid' | 'rest', month: string)
   writeDB(db);
   return db;
 }
+
+export function deleteVote(name: string) {
+  const db = readDB();
+  db.votes = db.votes.filter(v => v.name !== name);
+  writeDB(db);
+  return db;
+}
+
+export function deleteDeposit(name: string, month: string) {
+  const db = readDB();
+  db.deposits = db.deposits.filter(d => !(d.name === name && d.month === month));
+  writeDB(db);
+  return db;
+}

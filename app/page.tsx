@@ -198,7 +198,21 @@ export default function Home() {
             <h3 className="text-sm font-semibold text-gray-500">참석자 명단</h3>
             <div className="flex flex-wrap gap-2">
               {data.votes.filter((v) => v.status === 'attendance').map((v) => (
-                <span key={v.name} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">{v.name}</span>
+                <div key={v.name} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 group relative">
+                  <span>{v.name}</span>
+                  {/* 삭제 버튼 (본인 이름일 때만 표시하도록 할 수도 있지만, 일단 누구나 삭제 가능하게) */}
+                  <button 
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!confirm(`'${v.name}' 님의 참석을 취소하시겠습니까?`)) return;
+                      await fetch(`/api/vote?name=${encodeURIComponent(v.name)}`, { method: 'DELETE' });
+                      fetchData();
+                    }}
+                    className="w-4 h-4 rounded-full bg-blue-200 text-blue-600 flex items-center justify-center text-xs hover:bg-red-500 hover:text-white transition"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
               {data.votes.filter((v) => v.status === 'attendance').length === 0 && (
                 <span className="text-gray-400 text-sm">아직 아무도 없어요...</span>
@@ -269,13 +283,26 @@ export default function Home() {
             <h3 className="text-sm font-semibold text-gray-500 mb-2">이번 달 현황 ({thisMonthDeposits.length}명)</h3>
             <ul className="space-y-1">
               {thisMonthDeposits.map((d, i) => (
-                <li key={i} className={`flex justify-between text-sm p-2 rounded ${d.status === 'paid' ? 'bg-green-50' : 'bg-gray-100'}`}>
+                <li key={i} className={`flex justify-between text-sm p-2 rounded ${d.status === 'paid' ? 'bg-green-50' : 'bg-gray-100'} group relative`}>
                   <span className={`font-medium ${d.status === 'paid' ? 'text-green-800' : 'text-gray-600'}`}>
                     {d.name} {d.status === 'rest' && '(휴식)'}
                   </span>
-                  <span className={d.status === 'paid' ? 'text-green-600' : 'text-gray-400'}>
-                    {d.status === 'paid' ? '10,000원' : '-'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={d.status === 'paid' ? 'text-green-600' : 'text-gray-400'}>
+                      {d.status === 'paid' ? '10,000원' : '-'}
+                    </span>
+                    <button 
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!confirm(`'${d.name}' 님의 입금/휴식 기록을 삭제하시겠습니까?`)) return;
+                        await fetch(`/api/deposit?name=${encodeURIComponent(d.name)}&month=${currentMonth}`, { method: 'DELETE' });
+                        fetchData();
+                      }}
+                      className="w-5 h-5 rounded-full bg-white border border-gray-200 text-gray-400 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>

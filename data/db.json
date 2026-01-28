@@ -1,4 +1,45 @@
 {
-  "votes": [],
-  "deposits": []
+  "votes": [
+    {
+      "name": "전인우",
+      "status": "attendance",
+      "timestamp": 1769604775056
+    },
+    {
+      "name": "전인우1",
+      "status": "attendance",
+      "timestamp": 1769604780564
+    },
+    {
+      "name": "전인우12",
+      "status": "attendance",
+      "timestamp": 1769604782042
+    },
+    {
+      "name": "전인우123",
+      "status": "attendance",
+      "timestamp": 1769604783240
+    },
+    {
+      "name": "전인우1234",
+      "status": "attendance",
+      "timestamp": 1769604784442
+    }
+  ],
+  "deposits": [
+    {
+      "name": "전인우1234",
+      "amount": 0,
+      "month": "2026-01",
+      "status": "rest",
+      "timestamp": 1769604812990
+    },
+    {
+      "name": "전인우12345",
+      "amount": 10000,
+      "month": "2026-01",
+      "status": "paid",
+      "timestamp": 1769604821093
+    }
+  ]
 }

@@ -12,6 +12,8 @@ export type Vote = {
 export type Deposit = {
   name: string;
   amount: number;
+  month: string; // 'YYYY-MM' 형식
+  status: 'paid' | 'rest'; // 입금 완료 or 휴식
   timestamp: number;
 };
 
@@ -56,9 +58,25 @@ export function addVote(name: string, status: Vote['status']) {
   return db;
 }
 
-export function addDeposit(name: string, amount: number) {
+export function addDeposit(name: string, status: 'paid' | 'rest', month: string) {
   const db = readDB();
-  db.deposits.push({ name, amount, timestamp: Date.now() });
+  // 해당 월에 이미 기록이 있으면 덮어쓰기
+  const existingIndex = db.deposits.findIndex(d => d.name === name && d.month === month);
+  
+  const record: Deposit = { 
+    name, 
+    amount: status === 'paid' ? 10000 : 0, 
+    month, 
+    status, 
+    timestamp: Date.now() 
+  };
+
+  if (existingIndex >= 0) {
+    db.deposits[existingIndex] = record;
+  } else {
+    db.deposits.push(record);
+  }
+  
   writeDB(db);
   return db;
 }

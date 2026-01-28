@@ -122,7 +122,7 @@ export default function Home() {
   };
 
   // 하이드레이션 오류 방지
-  if (!mounted) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">로딩 중...</div>;
+  if (!mounted) return <div className="min-h-screen bg-gray-50 flex items-center justify-center font-bold text-gray-500">⚽️ 로딩 중...</div>;
 
   const attendanceCount = data.votes.filter((v) => v.status === 'attendance').length;
   const myVote = data.votes.find((v) => v.name === name)?.status;

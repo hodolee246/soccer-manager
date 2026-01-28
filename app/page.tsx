@@ -50,7 +50,7 @@ export default function Home() {
   };
 
   const handleVote = async (status: Vote['status']) => {
-    if (!name) return alert('먼저 이름을 입력해주세요! 👆');
+    if (!name.trim()) return alert('먼저 이름을 입력해주세요! 👆');
     setLoading(true);
     try {
       const res = await fetch('/api/vote', {
@@ -58,9 +58,14 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, status }),
       });
+      
+      if (!res.ok) throw new Error('API Error');
+      
       setData(await res.json());
+      alert('투표가 반영되었습니다! 👌');
     } catch (err) {
-      alert('투표 실패 ㅠㅠ');
+      console.error(err);
+      alert('투표 저장에 실패했어요. 인터넷 연결을 확인해주세요 ㅠㅠ');
     } finally {
       setLoading(false);
     }

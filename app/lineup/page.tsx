@@ -87,6 +87,31 @@ export default function LineupPage() {
     setDraggedPlayer(null);
   };
 
+  // 포메이션 변경 시 사라지는 포지션의 선수들을 벤치로 복귀
+  const changeFormation = (newFormation: FormationType) => {
+    if (newFormation === currentFormation) return;
+
+    const targetPositions = newFormation === '4-3-3' 
+      ? ['FW', 'MF', 'DF', 'GK'] 
+      : ['FW', 'AMF', 'DMF', 'DF', 'GK'];
+
+    const newLineup = { ...lineup };
+    const newPlayers = [...players];
+
+    // 현재 라인업에 있지만, 새 포메이션에는 없는 포지션 찾기
+    Object.keys(newLineup).forEach(pos => {
+      if (!targetPositions.includes(pos)) {
+        // 해당 포지션에 있던 선수들을 벤치로 이동
+        newPlayers.push(...newLineup[pos]);
+        newLineup[pos] = [];
+      }
+    });
+
+    setLineup(newLineup);
+    setPlayers(newPlayers);
+    setCurrentFormation(newFormation);
+  };
+
   // 현재 포메이션에 맞는 포지션 리스트 반환
   const getPositionLayout = () => {
     if (currentFormation === '4-3-3') {
@@ -108,13 +133,13 @@ export default function LineupPage() {
         {/* 포메이션 선택 버튼 */}
         <div className="flex justify-center gap-2 mb-4">
           <button 
-            onClick={() => setCurrentFormation('4-3-3')}
+            onClick={() => changeFormation('4-3-3')}
             className={`px-4 py-2 rounded-full text-sm font-bold transition ${currentFormation === '4-3-3' ? 'bg-green-600 text-white' : 'bg-white text-green-700 border border-green-200'}`}
           >
             4-3-3
           </button>
           <button 
-            onClick={() => setCurrentFormation('4-2-1-3')}
+            onClick={() => changeFormation('4-2-1-3')}
             className={`px-4 py-2 rounded-full text-sm font-bold transition ${currentFormation === '4-2-1-3' ? 'bg-green-600 text-white' : 'bg-white text-green-700 border border-green-200'}`}
           >
             4-2-1-3

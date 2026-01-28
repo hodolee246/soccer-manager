@@ -8,16 +8,40 @@ type Vote = {
   status: 'attendance' | 'absence' | 'undecided';
 };
 
+// 포메이션 타입 정의
+type FormationType = '4-3-3' | '4-2-1-3';
+
+const formations = {
+  '4-3-3': {
+    FW: 3,
+    MF: 3,
+    DF: 4,
+    GK: 1
+  },
+  '4-2-1-3': {
+    FW: 3,
+    AMF: 1,
+    DMF: 2,
+    DF: 4,
+    GK: 1
+  }
+};
+
 export default function LineupPage() {
   const [players, setPlayers] = useState<string[]>([]);
-  const [formations, setFormations] = useState<{ [key: string]: string[] }>({
+  // 선택된 포메이션에 따라 필드 구성
+  const [currentFormation, setCurrentFormation] = useState<FormationType>('4-3-3');
+  
+  // 포지션별 배치 상태
+  const [lineup, setLineup] = useState<{ [key: string]: string[] }>({
     FW: [],
     MF: [],
+    AMF: [],
+    DMF: [],
     DF: [],
     GK: [],
   });
   
-  // 드래그 중인 선수 이름
   const [draggedPlayer, setDraggedPlayer] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,61 +68,89 @@ export default function LineupPage() {
   const handleDrop = (zone: string) => {
     if (!draggedPlayer) return;
 
-    // 원래 있던 곳에서 제거
+    // 1. 기존 위치에서 제거
     const newPlayers = players.filter(p => p !== draggedPlayer);
-    const newFormations = { ...formations };
-    
-    // 기존 포메이션에서도 제거
-    Object.keys(newFormations).forEach(key => {
-      newFormations[key] = newFormations[key].filter(p => p !== draggedPlayer);
+    const newLineup = { ...lineup };
+    Object.keys(newLineup).forEach(key => {
+      newLineup[key] = newLineup[key].filter(p => p !== draggedPlayer);
     });
 
+    // 2. 새 위치에 추가
     if (zone === 'bench') {
       newPlayers.push(draggedPlayer);
     } else {
-      newFormations[zone].push(draggedPlayer);
+      newLineup[zone].push(draggedPlayer);
     }
 
     setPlayers(newPlayers);
-    setFormations(newFormations);
+    setLineup(newLineup);
     setDraggedPlayer(null);
+  };
+
+  // 현재 포메이션에 맞는 포지션 리스트 반환
+  const getPositionLayout = () => {
+    if (currentFormation === '4-3-3') {
+      return ['FW', 'MF', 'DF', 'GK'];
+    }
+    return ['FW', 'AMF', 'DMF', 'DF', 'GK'];
   };
 
   return (
     <div className="min-h-screen bg-green-50 p-4 font-sans pb-20">
-      <header className="mb-6 flex items-center justify-between">
-        <Link href="/" className="text-blue-600 font-bold">← 뒤로가기</Link>
-        <h1 className="text-xl font-bold text-green-900">📋 라인업 짜기</h1>
-        <div className="w-16"></div> 
+      <header className="mb-4 flex items-center justify-between">
+        <Link href="/" className="text-blue-600 font-bold text-sm">← 홈으로</Link>
+        <h1 className="text-lg font-bold text-green-900">📋 라인업</h1>
+        <div className="w-14"></div> 
       </header>
 
       <main className="mx-auto max-w-md space-y-4">
         
-        {/* 그라운드 (드롭존) */}
-        <div className="bg-green-600 rounded-xl p-4 shadow-lg min-h-[500px] flex flex-col justify-between relative overflow-hidden border-2 border-green-700">
-          {/* 하프라인 장식 */}
-          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-green-400 opacity-50"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border-2 border-green-400 opacity-50"></div>
+        {/* 포메이션 선택 버튼 */}
+        <div className="flex justify-center gap-2 mb-4">
+          <button 
+            onClick={() => setCurrentFormation('4-3-3')}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition ${currentFormation === '4-3-3' ? 'bg-green-600 text-white' : 'bg-white text-green-700 border border-green-200'}`}
+          >
+            4-3-3
+          </button>
+          <button 
+            onClick={() => setCurrentFormation('4-2-1-3')}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition ${currentFormation === '4-2-1-3' ? 'bg-green-600 text-white' : 'bg-white text-green-700 border border-green-200'}`}
+          >
+            4-2-1-3
+          </button>
+        </div>
 
-          {['FW', 'MF', 'DF', 'GK'].map((pos) => (
+        {/* 그라운드 (드롭존) */}
+        <div className="bg-green-600 rounded-xl p-3 shadow-lg min-h-[580px] flex flex-col gap-2 relative overflow-hidden border-2 border-green-700">
+          
+          {/* 하프라인 & 센터서클 장식 */}
+          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/20"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-2 border-white/20"></div>
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-16 border-2 border-white/20 rounded-b-full"></div>
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-32 h-16 border-2 border-white/20 rounded-t-full"></div>
+
+          {getPositionLayout().map((pos) => (
             <div
               key={pos}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => handleDrop(pos)}
-              className="z-10 min-h-[80px] border border-white/20 rounded-lg p-2 flex flex-wrap gap-2 justify-center items-center bg-white/10 backdrop-blur-sm"
+              className="z-10 flex-1 border border-white/10 rounded-lg p-1 flex flex-col justify-center items-center bg-white/5 backdrop-blur-[1px] relative transition-colors hover:bg-white/10"
             >
-              <div className="absolute left-2 text-white/50 text-xs font-bold">{pos}</div>
-              {formations[pos].map((name) => (
-                <div
-                  key={name}
-                  draggable
-                  onDragStart={() => handleDragStart(name)}
-                  className="bg-white text-green-800 px-3 py-1.5 rounded-full text-sm font-bold shadow-md cursor-grab active:cursor-grabbing border border-green-200"
-                >
-                  {name}
-                </div>
-              ))}
-              {formations[pos].length === 0 && <span className="text-white/30 text-xs">비어있음</span>}
+              <div className="text-white/60 text-[10px] font-bold uppercase mb-1 tracking-wider">{pos}</div>
+              <div className="flex flex-wrap justify-center gap-1.5 w-full">
+                {lineup[pos].map((name) => (
+                  <div
+                    key={name}
+                    draggable
+                    onDragStart={() => handleDragStart(name)}
+                    className="bg-white text-green-900 px-2.5 py-1 rounded-full text-xs font-bold shadow-sm cursor-grab active:cursor-grabbing border border-green-200 whitespace-nowrap"
+                  >
+                    {name}
+                  </div>
+                ))}
+                {lineup[pos].length === 0 && <span className="text-white/20 text-[10px]">-</span>}
+              </div>
             </div>
           ))}
         </div>
@@ -107,26 +159,26 @@ export default function LineupPage() {
         <div 
           onDragOver={(e) => e.preventDefault()}
           onDrop={() => handleDrop('bench')}
-          className="bg-white p-4 rounded-xl shadow-md min-h-[120px]"
+          className="bg-white p-4 rounded-xl shadow-md min-h-[100px] border border-gray-100"
         >
-          <h3 className="text-sm font-bold text-gray-500 mb-3">🏃 대기 선수 (드래그해서 배치하세요)</h3>
+          <h3 className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">Bench ({players.length})</h3>
           <div className="flex flex-wrap gap-2">
             {players.map((name) => (
               <div
                 key={name}
                 draggable
                 onDragStart={() => handleDragStart(name)}
-                className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium cursor-grab active:cursor-grabbing hover:bg-gray-200 transition"
+                className="bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full text-xs font-bold cursor-grab active:cursor-grabbing hover:bg-gray-200 transition border border-gray-200"
               >
                 {name}
               </div>
             ))}
-            {players.length === 0 && <span className="text-gray-400 text-sm">모두 배치 완료! 👍</span>}
+            {players.length === 0 && <span className="text-gray-300 text-xs w-full text-center py-2">대기 선수 없음</span>}
           </div>
         </div>
 
-        <div className="text-center text-xs text-gray-400">
-          * 선수를 꾹 눌러서 위 포지션 박스로 옮겨보세요.
+        <div className="text-center text-[10px] text-gray-400">
+          * 선수를 길게 눌러 포지션 박스로 이동시키세요.
         </div>
 
       </main>

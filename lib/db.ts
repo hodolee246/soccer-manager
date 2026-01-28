@@ -65,7 +65,7 @@ export function addDeposit(name: string, status: 'paid' | 'rest', month: string)
   
   const record: Deposit = { 
     name, 
-    amount: status === 'paid' ? 10000 : 0, 
+    amount: status === 'paid' ? 20000 : 0, 
     month, 
     status, 
     timestamp: Date.now() 

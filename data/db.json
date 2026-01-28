@@ -6,24 +6,14 @@
       "timestamp": 1769604775056
     },
     {
-      "name": "전인우1",
-      "status": "attendance",
-      "timestamp": 1769604780564
+      "name": "123",
+      "status": "absence",
+      "timestamp": 1769607648369
     },
     {
-      "name": "전인우12",
-      "status": "attendance",
-      "timestamp": 1769604782042
-    },
-    {
-      "name": "전인우123",
-      "status": "attendance",
-      "timestamp": 1769604783240
-    },
-    {
-      "name": "전인우1234",
-      "status": "attendance",
-      "timestamp": 1769604784442
+      "name": "412",
+      "status": "undecided",
+      "timestamp": 1769607659721
     }
   ],
   "deposits": [

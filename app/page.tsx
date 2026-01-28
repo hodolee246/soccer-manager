@@ -194,29 +194,78 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-gray-500">참석자 명단</h3>
-            <div className="flex flex-wrap gap-2">
-              {data.votes.filter((v) => v.status === 'attendance').map((v) => (
-                <div key={v.name} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 group relative">
-                  <span>{v.name}</span>
-                  {/* 삭제 버튼 (본인 이름일 때만 표시하도록 할 수도 있지만, 일단 누구나 삭제 가능하게) */}
-                  <button 
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (!confirm(`'${v.name}' 님의 참석을 취소하시겠습니까?`)) return;
-                      await fetch(`/api/vote?name=${encodeURIComponent(v.name)}`, { method: 'DELETE' });
-                      fetchData();
-                    }}
-                    className="w-4 h-4 rounded-full bg-blue-200 text-blue-600 flex items-center justify-center text-xs hover:bg-red-500 hover:text-white transition"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              {data.votes.filter((v) => v.status === 'attendance').length === 0 && (
-                <span className="text-gray-400 text-sm">아직 아무도 없어요...</span>
-              )}
+          {/* 투표 현황 리스트 */}
+          <div className="space-y-4">
+            {/* 참석 */}
+            <div>
+              <h3 className="text-sm font-semibold text-blue-600 mb-1">참석 ({data.votes.filter(v => v.status === 'attendance').length})</h3>
+              <div className="flex flex-wrap gap-2">
+                {data.votes.filter((v) => v.status === 'attendance').map((v) => (
+                  <div key={v.name} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 group relative">
+                    <span>{v.name}</span>
+                    <button 
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!confirm(`'${v.name}' 님의 참석을 취소하시겠습니까?`)) return;
+                        await fetch(`/api/vote?name=${encodeURIComponent(v.name)}`, { method: 'DELETE' });
+                        fetchData();
+                      }}
+                      className="w-4 h-4 rounded-full bg-blue-200 text-blue-600 flex items-center justify-center text-xs hover:bg-red-500 hover:text-white transition"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {data.votes.filter((v) => v.status === 'attendance').length === 0 && <span className="text-gray-400 text-sm">-</span>}
+              </div>
+            </div>
+
+            {/* 불참 */}
+            <div>
+              <h3 className="text-sm font-semibold text-red-500 mb-1">불참 ({data.votes.filter(v => v.status === 'absence').length})</h3>
+              <div className="flex flex-wrap gap-2">
+                {data.votes.filter((v) => v.status === 'absence').map((v) => (
+                  <div key={v.name} className="bg-red-50 text-red-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 group relative">
+                    <span>{v.name}</span>
+                    <button 
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!confirm(`'${v.name}' 님의 투표를 삭제하시겠습니까?`)) return;
+                        await fetch(`/api/vote?name=${encodeURIComponent(v.name)}`, { method: 'DELETE' });
+                        fetchData();
+                      }}
+                      className="w-4 h-4 rounded-full bg-red-200 text-red-600 flex items-center justify-center text-xs hover:bg-red-500 hover:text-white transition"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {data.votes.filter((v) => v.status === 'absence').length === 0 && <span className="text-gray-400 text-sm">-</span>}
+              </div>
+            </div>
+
+            {/* 미정 */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 mb-1">미정 ({data.votes.filter(v => v.status === 'undecided').length})</h3>
+              <div className="flex flex-wrap gap-2">
+                {data.votes.filter((v) => v.status === 'undecided').map((v) => (
+                  <div key={v.name} className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm flex items-center gap-2 group relative">
+                    <span>{v.name}</span>
+                    <button 
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!confirm(`'${v.name}' 님의 투표를 삭제하시겠습니까?`)) return;
+                        await fetch(`/api/vote?name=${encodeURIComponent(v.name)}`, { method: 'DELETE' });
+                        fetchData();
+                      }}
+                      className="w-4 h-4 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs hover:bg-red-500 hover:text-white transition"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {data.votes.filter((v) => v.status === 'undecided').length === 0 && <span className="text-gray-400 text-sm">-</span>}
+              </div>
             </div>
           </div>
           
@@ -238,7 +287,7 @@ export default function Home() {
           <div className="flex flex-col gap-3">
             <div className="flex justify-between items-center bg-gray-100 p-3 rounded-lg">
               <span className="text-gray-700">이번 달 회비</span>
-              <span className="font-bold text-blue-900">10,000원</span>
+              <span className="font-bold text-blue-900">20,000원</span>
             </div>
             
             <a
@@ -289,7 +338,7 @@ export default function Home() {
                   </span>
                   <div className="flex items-center gap-2">
                     <span className={d.status === 'paid' ? 'text-green-600' : 'text-gray-400'}>
-                      {d.status === 'paid' ? '10,000원' : '-'}
+                      {d.status === 'paid' ? '20,000원' : '-'}
                     </span>
                     <button 
                       onClick={async (e) => {

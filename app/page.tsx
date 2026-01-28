@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 type Vote = {
   name: string;
@@ -25,7 +26,6 @@ export default function Home() {
   const [data, setData] = useState<DBData>({ votes: [], deposits: [] });
   const [loading, setLoading] = useState(false);
   
-  // 현재 날짜 기준 이번 달 (YYYY-MM)
   const currentMonth = new Date().toISOString().slice(0, 7); 
 
   useEffect(() => {
@@ -93,8 +93,6 @@ export default function Home() {
 
   const attendanceCount = data.votes.filter((v) => v.status === 'attendance').length;
   const myVote = data.votes.find((v) => v.name === name)?.status;
-
-  // 이번 달 입금/휴식 현황 필터링
   const thisMonthDeposits = data.deposits.filter(d => d.month === currentMonth);
   const myDepositStatus = thisMonthDeposits.find(d => d.name === name)?.status;
 
@@ -106,7 +104,6 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-md space-y-6">
-        {/* 이름 입력 */}
         <div className="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
           <label className="block text-sm font-medium text-gray-700 mb-1">내 이름 (닉네임)</label>
           <input
@@ -118,7 +115,6 @@ export default function Home() {
           />
         </div>
 
-        {/* 투표 섹션 */}
         <div className="rounded-xl bg-white p-6 shadow-md">
           <h2 className="mb-4 text-xl font-bold text-gray-800 flex justify-between items-center">
             <span>📅 이번 주 경기</span>
@@ -166,9 +162,15 @@ export default function Home() {
               )}
             </div>
           </div>
+          
+          {/* 라인업 바로가기 */}
+          <div className="mt-4 border-t pt-4">
+            <Link href="/lineup" className="block w-full text-center bg-green-50 py-3 rounded-lg text-green-700 font-bold hover:bg-green-100 transition border border-green-200">
+              📋 라인업 짜러 가기 →
+            </Link>
+          </div>
         </div>
 
-        {/* 회비 섹션 (월별 관리) */}
         <div className="rounded-xl bg-white p-6 shadow-md">
           <h2 className="mb-4 text-xl font-bold text-gray-800 flex justify-between items-center">
             <span>💰 {parseInt(currentMonth.split('-')[1])}월 회비</span>
@@ -219,7 +221,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 입금/휴식 현황 리스트 */}
           <div className="mt-6 border-t pt-4">
             <h3 className="text-sm font-semibold text-gray-500 mb-2">이번 달 현황 ({thisMonthDeposits.length}명)</h3>
             <ul className="space-y-1">

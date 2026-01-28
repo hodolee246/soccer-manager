@@ -25,10 +25,13 @@ export default function Home() {
   const [name, setName] = useState('');
   const [data, setData] = useState<DBData>({ votes: [], deposits: [] });
   const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [mounted, setMounted] = useState(false);
   
   const currentMonth = new Date().toISOString().slice(0, 7); 
 
   useEffect(() => {
+    setMounted(true);
     const savedName = localStorage.getItem('soccer_user_name');
     if (savedName) setName(savedName);
     fetchData();
@@ -49,42 +52,36 @@ export default function Home() {
     localStorage.setItem('soccer_user_name', inputName);
   };
 
+  const showMessage = (text: string, type: 'success' | 'error') => {
+    setMsg({ text, type });
+    setTimeout(() => setMsg(null), 3000); // 3초 후 사라짐
+  };
+
   const handleVote = async (status: Vote['status']) => {
-    // 공백 제거 후 이름 확인
     const trimmedName = name.trim();
     if (!trimmedName) {
-      alert('이름을 입력해주세요! 👆');
+      showMessage('이름을 먼저 입력해주세요! 👆', 'error');
       return;
     }
     
-    // 로컬스토리지에 저장 (혹시 모를 초기화 방지)
     saveName(trimmedName);
-
     setLoading(true);
+    
     try {
-      console.log('Sending vote request:', { name: trimmedName, status });
-      
       const res = await fetch('/api/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: trimmedName, status }),
       });
       
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('API Error:', errorText);
-        throw new Error(`Server responded with ${res.status}`);
-      }
+      if (!res.ok) throw new Error('API Error');
       
-      const updatedData = await res.json();
-      console.log('Vote updated:', updatedData);
-      setData(updatedData);
-      
-      // 사용자 피드백 (alert 대신 작은 토스트 메시지나 상태 변경으로 하면 좋겠지만 일단 alert 유지)
-      // alert('투표가 반영되었습니다! 👌'); 
+      const updated = await res.json();
+      setData(updated);
+      showMessage('투표가 저장되었습니다! 👌', 'success');
     } catch (err) {
-      console.error('Vote failed:', err);
-      alert('서버와 통신에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      console.error(err);
+      showMessage('저장에 실패했습니다. 다시 시도해주세요.', 'error');
     } finally {
       setLoading(false);
     }
@@ -93,45 +90,39 @@ export default function Home() {
   const handleDeposit = async (status: 'paid' | 'rest') => {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      alert('이름을 입력해주세요! 👆');
+      showMessage('이름을 먼저 입력해주세요! 👆', 'error');
       return;
     }
     
-    saveName(trimmedName);
-    
-    const msg = status === 'paid' 
-      ? `${trimmedName}님, ${currentMonth}월 회비 입금 확인 요청을 남길까요?`
-      : `${trimmedName}님, ${currentMonth}월은 쉬어가시나요? (회비 없음)`;
-      
-    if (!confirm(msg)) return;
+    saveName(trimmedName); // 이름 저장 보장
+
+    // window.confirm 대신 커스텀 UI를 쓰면 좋겠지만, 일단 간단히 진행
+    // 만약 confirm이 차단된다면 바로 진행되도록 수정 고려 (일단은 confirm 유지하되 로그 추가)
+    if (!confirm(`${trimmedName}님, ${status === 'paid' ? '입금 확인 요청' : '휴식'} 처리하시겠습니까?`)) return;
 
     setLoading(true);
     try {
-      console.log('Sending deposit request:', { name: trimmedName, status, month: currentMonth });
-
       const res = await fetch('/api/deposit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: trimmedName, status, month: currentMonth }),
       });
+      
+      if (!res.ok) throw new Error('API Error');
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('API Error:', errorText);
-        throw new Error(`Server responded with ${res.status}`);
-      }
-
-      const updatedData = await res.json();
-      console.log('Deposit updated:', updatedData);
-      setData(updatedData);
-      alert('반영되었습니다! 🎉');
+      const updated = await res.json();
+      setData(updated);
+      showMessage('처리가 완료되었습니다! 🎉', 'success');
     } catch (err) {
-      console.error('Deposit failed:', err);
-      alert('요청 처리에 실패했습니다.');
+      console.error(err);
+      showMessage('요청 실패. 다시 시도해주세요.', 'error');
     } finally {
       setLoading(false);
     }
   };
+
+  // 하이드레이션 오류 방지
+  if (!mounted) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">로딩 중...</div>;
 
   const attendanceCount = data.votes.filter((v) => v.status === 'attendance').length;
   const myVote = data.votes.find((v) => v.name === name)?.status;
@@ -144,6 +135,13 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-blue-900">⚽️ 원패스 FC</h1>
         <p className="text-gray-600">이번 주 경기 참석하시나요?</p>
       </header>
+
+      {/* 알림 메시지 (Toast) */}
+      {msg && (
+        <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-50 text-white font-bold animate-bounce ${msg.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+          {msg.text}
+        </div>
+      )}
 
       <main className="mx-auto max-w-md space-y-6">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
@@ -165,29 +163,32 @@ export default function Home() {
           
           <div className="grid grid-cols-3 gap-3 mb-6">
             <button
+              type="button"
               onClick={() => handleVote('attendance')}
               disabled={loading}
-              className={`py-3 rounded-lg font-bold transition ${
+              className={`py-3 rounded-lg font-bold transition active:scale-95 ${
                 myVote === 'attendance' ? 'bg-blue-600 text-white ring-2 ring-offset-2 ring-blue-600' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-              }`}
+              } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               참석 🙆‍♂️
             </button>
             <button
+              type="button"
               onClick={() => handleVote('absence')}
               disabled={loading}
-              className={`py-3 rounded-lg font-bold transition ${
+              className={`py-3 rounded-lg font-bold transition active:scale-95 ${
                 myVote === 'absence' ? 'bg-red-600 text-white ring-2 ring-offset-2 ring-red-600' : 'bg-red-100 text-red-600 hover:bg-red-200'
-              }`}
+              } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               불참 🙅‍♂️
             </button>
             <button
+              type="button"
               onClick={() => handleVote('undecided')}
               disabled={loading}
-              className={`py-3 rounded-lg font-bold transition ${
+              className={`py-3 rounded-lg font-bold transition active:scale-95 ${
                 myVote === 'undecided' ? 'bg-gray-600 text-white ring-2 ring-offset-2 ring-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               미정 🤔
             </button>
@@ -205,7 +206,6 @@ export default function Home() {
             </div>
           </div>
           
-          {/* 라인업 바로가기 */}
           <div className="mt-4 border-t pt-4">
             <Link href="/lineup" className="block w-full text-center bg-green-50 py-3 rounded-lg text-green-700 font-bold hover:bg-green-100 transition border border-green-200">
               📋 라인업 짜러 가기 →
@@ -238,25 +238,27 @@ export default function Home() {
             
             <div className="grid grid-cols-2 gap-3">
               <button
+                type="button"
                 onClick={() => handleDeposit('paid')}
                 disabled={loading}
-                className={`py-3 rounded-lg font-bold transition flex items-center justify-center gap-1 ${
+                className={`py-3 rounded-lg font-bold transition flex items-center justify-center gap-1 active:scale-95 ${
                   myDepositStatus === 'paid'
                     ? 'bg-green-600 text-white ring-2 ring-offset-2 ring-green-600'
                     : 'border-2 border-green-500 text-green-600 hover:bg-green-50'
-                }`}
+                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 ✅ 입금 완료
               </button>
               
               <button
+                type="button"
                 onClick={() => handleDeposit('rest')}
                 disabled={loading}
-                className={`py-3 rounded-lg font-bold transition flex items-center justify-center gap-1 ${
+                className={`py-3 rounded-lg font-bold transition flex items-center justify-center gap-1 active:scale-95 ${
                   myDepositStatus === 'rest'
                     ? 'bg-gray-600 text-white ring-2 ring-offset-2 ring-gray-600'
                     : 'border-2 border-gray-400 text-gray-600 hover:bg-gray-50'
-                }`}
+                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 💤 이번 달 휴식
               </button>
